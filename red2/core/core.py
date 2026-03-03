@@ -13,7 +13,6 @@ class Core:
         self.load_objects()
 
     def load_objects(self):
-        """Завантаження шаблонів об’єктів з папки object"""
         for filename in os.listdir(self.object_path):
             if filename.endswith(".json"):
                 path = os.path.join(self.object_path, filename)
@@ -28,7 +27,6 @@ class Core:
                     self.scene.add_entity(entity)
 
     def switch_placement(self, mode: str):
-        """Перемикання системи розміщення"""
         if mode == "Free":
             self.placement = FreePlacement()
         elif mode == "SquareGrid":
@@ -37,7 +35,6 @@ class Core:
             raise ValueError(f"Невідомий режим: {mode}")
 
     def save_scene(self, filename="demo_map.json"):
-        """Збереження сцени у JSON"""
         data = {
             "entities": [
                 {"id": e.id, "x": e.x, "y": e.y, "props": e.props}
@@ -49,7 +46,6 @@ class Core:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def load_scene(self, filename):
-        """Завантаження сцени з JSON"""
         path = os.path.join(self.save_path, filename)
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)

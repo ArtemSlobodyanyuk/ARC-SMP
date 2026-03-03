@@ -1,6 +1,5 @@
 class BasePlacement:
     def snap(self, x: float, y: float) -> tuple[float, float]:
-        """Інтерфейс для snap"""
         raise NotImplementedError
 
 
