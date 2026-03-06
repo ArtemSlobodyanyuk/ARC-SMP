@@ -5,73 +5,92 @@ from PyQt6.QtWidgets import (
     QGraphicsView,
     QGraphicsScene,
     QGraphicsRectItem,
-    QWidget,
+    QDialog,
     QVBoxLayout,
     QLineEdit,
     QTextEdit,
     QLabel,
-    QHBoxLayout
+    QPushButton,
+    QToolBar
 )
 from PyQt6.QtCore import Qt, QRectF
-from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtGui import QBrush, QColor, QAction
 
 
 class CubeItem(QGraphicsRectItem):
     def __init__(self, size=100):
         super().__init__(QRectF(0, 0, size, size))
-        self.setBrush(QBrush(QColor("#FFFFFF")))
+
+        self.setBrush(QBrush(QColor("#4CAF50")))
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, True)
-        self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, True)
 
         self.name = "cube"
         self.note = ""
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            dialog = PropertyDialog(self)
+            dialog.exec()
+        super().mousePressEvent(event)
+
+
+class PropertyDialog(QDialog):
+    def __init__(self, cube):
+        super().__init__()
+
+        self.cube = cube
+        self.setWindowTitle("Object properties")
+
+        layout = QVBoxLayout()
+
+        layout.addWidget(QLabel("Назва"))
+        self.name_input = QLineEdit(cube.name)
+        layout.addWidget(self.name_input)
+
+        layout.addWidget(QLabel("Нотатка"))
+        self.note_input = QTextEdit(cube.note)
+        layout.addWidget(self.note_input)
+
+        save_button = QPushButton("Зберегти")
+        save_button.clicked.connect(self.save)
+        layout.addWidget(save_button)
+
+        self.setLayout(layout)
+
+    def save(self):
+        self.cube.name = self.name_input.text()
+        self.cube.note = self.note_input.toPlainText()
+        self.close()
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("ARCnGMS Prototype")
+
+        self.setWindowTitle("ARCnGMS prototype")
         self.setGeometry(200, 200, 900, 600)
-
-        # Центральний віджет
-        central = QWidget()
-        self.setCentralWidget(central)
-
-        layout = QHBoxLayout()
-        central.setLayout(layout)
 
         # Сцена
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene)
-        layout.addWidget(self.view, 3)
+        self.setCentralWidget(self.view)
 
-        # Куб
-        self.cube = CubeItem()
-        self.cube.setPos(200, 200)
-        self.scene.addItem(self.cube)
+        # Верхня панель
+        toolbar = QToolBar("Main Toolbar")
+        self.addToolBar(toolbar)
 
-        # Панель властивостей
-        panel = QVBoxLayout()
+        add_action = QAction("Додати об'єкт", self)
+        add_action.triggered.connect(self.add_cube)
 
-        panel.addWidget(QLabel("Назва:"))
-        self.name_input = QLineEdit(self.cube.name)
-        panel.addWidget(self.name_input)
+        toolbar.addAction(add_action)
 
-        panel.addWidget(QLabel("Нотатка:"))
-        self.note_input = QTextEdit(self.cube.note)
-        panel.addWidget(self.note_input)
+        # Стартовий куб
+        self.add_cube()
 
-        layout.addLayout(panel, 1)
-
-        # Сигнали
-        self.name_input.textChanged.connect(self.update_name)
-        self.note_input.textChanged.connect(self.update_note)
-
-    def update_name(self, text):
-        self.cube.name = text
-
-    def update_note(self):
-        self.cube.note = self.note_input.toPlainText()
+    def add_cube(self):
+        cube = CubeItem()
+        cube.setPos(200, 200)
+        self.scene.addItem(cube)
 
 
 if __name__ == "__main__":
