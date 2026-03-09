@@ -4,97 +4,157 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QGraphicsView,
     QGraphicsScene,
+    QGraphicsEllipseItem,
     QGraphicsRectItem,
+    QToolBar,
+    QMenu,
     QDialog,
     QVBoxLayout,
+    QLabel,
     QLineEdit,
     QTextEdit,
-    QLabel,
     QPushButton,
-    QToolBar
+    QToolButton
 )
-from PyQt6.QtCore import Qt, QRectF
-from PyQt6.QtGui import QBrush, QColor, QAction
+from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtCore import QRectF
 
 
-class CubeItem(QGraphicsRectItem):
-    def __init__(self, size=100):
-        super().__init__(QRectF(0, 0, size, size))
-
-        self.setBrush(QBrush(QColor("#4CAF50")))
-        self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, True)
-
-        self.name = "cube"
-        self.note = ""
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            dialog = PropertyDialog(self)
-            dialog.exec()
-        super().mousePressEvent(event)
-
+# ---------- Property Window ----------
 
 class PropertyDialog(QDialog):
-    def __init__(self, cube):
+
+    def __init__(self, obj):
         super().__init__()
 
-        self.cube = cube
+        self.obj = obj
         self.setWindowTitle("Object properties")
 
         layout = QVBoxLayout()
 
-        layout.addWidget(QLabel("Назва"))
-        self.name_input = QLineEdit(cube.name)
+        layout.addWidget(QLabel("Name"))
+        self.name_input = QLineEdit(obj.name)
         layout.addWidget(self.name_input)
 
-        layout.addWidget(QLabel("Нотатка"))
-        self.note_input = QTextEdit(cube.note)
+        layout.addWidget(QLabel("Note"))
+        self.note_input = QTextEdit(obj.note)
         layout.addWidget(self.note_input)
 
-        save_button = QPushButton("Зберегти")
+        save_button = QPushButton("Save")
         save_button.clicked.connect(self.save)
-        layout.addWidget(save_button)
 
+        layout.addWidget(save_button)
         self.setLayout(layout)
 
     def save(self):
-        self.cube.name = self.name_input.text()
-        self.cube.note = self.note_input.toPlainText()
+        self.obj.name = self.name_input.text()
+        self.obj.note = self.note_input.toPlainText()
         self.close()
 
 
+# ---------- Base Object ----------
+
+class BaseItem:
+
+    def init_object(self):
+        self.setFlag(self.GraphicsItemFlag.ItemIsMovable, True)
+        self.setFlag(self.GraphicsItemFlag.ItemIsSelectable, True)
+
+        self.name = "object"
+        self.note = ""
+
+    def mouseDoubleClickEvent(self, event):
+        dialog = PropertyDialog(self)
+        dialog.exec()
+
+
+# ---------- Shapes ----------
+
+class CircleItem(QGraphicsEllipseItem, BaseItem):
+
+    def __init__(self):
+        super().__init__(QRectF(0, 0, 80, 80))
+        self.setBrush(QBrush(QColor("#3498db")))
+        self.init_object()
+
+
+class SquareItem(QGraphicsRectItem, BaseItem):
+
+    def __init__(self):
+        super().__init__(QRectF(0, 0, 80, 80))
+        self.setBrush(QBrush(QColor("#2ecc71")))
+        self.init_object()
+
+
+class RectangleItem(QGraphicsRectItem, BaseItem):
+
+    def __init__(self):
+        super().__init__(QRectF(0, 0, 120, 70))
+        self.setBrush(QBrush(QColor("#e67e22")))
+        self.init_object()
+
+
+# ---------- Main Window ----------
+
 class MainWindow(QMainWindow):
+
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("ARCnGMS prototype")
-        self.setGeometry(200, 200, 900, 600)
+        self.setWindowTitle("ARC prototype")
+        self.resize(900, 600)
 
-        # Сцена
+        # Scene
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene)
         self.setCentralWidget(self.view)
 
-        # Верхня панель
-        toolbar = QToolBar("Main Toolbar")
+        # Toolbar
+        toolbar = QToolBar()
         self.addToolBar(toolbar)
 
-        add_action = QAction("Додати об'єкт", self)
-        add_action.triggered.connect(self.add_cube)
+        # Dropdown button
+        add_button = QToolButton()
+        add_button.setText("Add object")
+        add_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
 
-        toolbar.addAction(add_action)
+        # Menu
+        menu = QMenu()
 
-        # Стартовий куб
-        self.add_cube()
+        menu.addAction("Circle", self.add_circle)
+        menu.addAction("Square", self.add_square)
+        menu.addAction("Rectangle", self.add_rectangle)
 
-    def add_cube(self):
-        cube = CubeItem()
-        cube.setPos(200, 200)
-        self.scene.addItem(cube)
+        add_button.setMenu(menu)
+
+        toolbar.addWidget(add_button)
+
+    def add_circle(self):
+        obj = CircleItem()
+        obj.setPos(200, 200)
+        self.scene.addItem(obj)
+
+    def add_square(self):
+        obj = SquareItem()
+        obj.setPos(200, 200)
+        self.scene.addItem(obj)
+
+    def add_rectangle(self):
+        obj = RectangleItem()
+        obj.setPos(200, 200)
+        self.scene.addItem(obj)
+
+
+# ---------- Run ----------
+
+def main():
+    app = QApplication(sys.argv)
+
+    window = MainWindow()
+    window.show()
+
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+    main()
