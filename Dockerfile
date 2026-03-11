@@ -1,6 +1,5 @@
 FROM python:3.11-slim
 
-# Qt залежності
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libxkbcommon-x11-0 \
