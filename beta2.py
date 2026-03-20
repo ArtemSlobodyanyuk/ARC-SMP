@@ -59,7 +59,7 @@ def open_editor(event):
     obj = canvas.find_closest(event.x, event.y)[0]
 
     window = tk.Toplevel(root)
-    window.title("object")
+    window.title("items")
 
     data = objects[obj]
 
@@ -103,7 +103,7 @@ topbar.pack(fill="x")
 
 add_button = tk.Button(
     topbar,
-    text="add object",
+    text="add items",
     command=show_menu,
     bg="#3c3c3c",
     fg="white"

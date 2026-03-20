@@ -115,7 +115,7 @@ class MainWindow(QMainWindow):
 
         # Dropdown button
         add_button = QToolButton()
-        add_button.setText("Add object")
+        add_button.setText("Add items")
         add_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
 
         # Menu

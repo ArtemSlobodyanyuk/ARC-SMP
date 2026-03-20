@@ -1,12 +1,13 @@
-from PyQt6.QtWidgets import QApplication
-from red2.core.core import Core
-from red2.ui.window import Window
 import sys
+from PyQt6.QtWidgets import QApplication
+from ui.main_window import MainWindow
 
 def main():
-    core = Core(object_path="object", save_path="save")
     app = QApplication(sys.argv)
-    window = Window(core)
+
+    window = MainWindow()
+    window.show()
+
     sys.exit(app.exec())
 
 if __name__ == "__main__":
