@@ -1,4 +1,4 @@
-from items.shapes import CircleItem, SquareItem, RectangleItem
+from red2.items.shapes import CircleItem, SquareItem, RectangleItem
 
 
 class ObjectFactory:

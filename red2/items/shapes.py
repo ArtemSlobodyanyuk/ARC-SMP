@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem
 from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtCore import QRectF
 
-from items.base_item import BaseItem
+from red2.items.base_item import BaseItem
 
 
 class CircleItem(QGraphicsEllipseItem, BaseItem):

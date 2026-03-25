@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QToolButton
 )
 
-from core.factory import ObjectFactory
+from red2.core.factory import ObjectFactory
 
 
 class MainWindow(QMainWindow):

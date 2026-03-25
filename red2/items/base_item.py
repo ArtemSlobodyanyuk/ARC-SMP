@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QGraphicsItem
-from ui.property_dialog import PropertyDialog
+from red2.ui.property_dialog import PropertyDialog
 
 
 class BaseItem:
