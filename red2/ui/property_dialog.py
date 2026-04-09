@@ -33,7 +33,11 @@ class PropertyDialog(QDialog):
         save_button = QPushButton("Save")
         save_button.clicked.connect(self.save)
 
+        delete_button = QPushButton("Delete")
+        delete_button.clicked.connect(self.delete)
+
         layout.addWidget(save_button)
+        layout.addWidget(delete_button)
         self.setLayout(layout)
 
     def save(self):
@@ -47,4 +51,14 @@ class PropertyDialog(QDialog):
         except:
             pass
 
-        self.close()
+    def delete(self):
+        if self.obj:
+            scene = self.obj.scene()
+            if scene:
+                scene.removeItem(self.obj)
+
+            # повне очищення
+            del self.obj
+            self.obj = None
+
+        self.accept()
