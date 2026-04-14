@@ -201,6 +201,10 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# Local app data (keep the folder via saves/.gitkeep)
+saves/*
+!saves/.gitkeep
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
