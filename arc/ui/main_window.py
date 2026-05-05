@@ -8,12 +8,42 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QMessageBox,
 )
+from PyQt6.QtCore import Qt
 
 import json
 from pathlib import Path
 
 from arc.core.factory import ObjectFactory
 from arc.items.base_item import BaseItem
+
+
+class CanvasView(QGraphicsView):
+    def __init__(self, scene: QGraphicsScene):
+        super().__init__(scene)
+        self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+        self.setInteractive(True)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.DefaultContextMenu)
+
+    def contextMenuEvent(self, event):
+        menu = QMenu(self)
+
+        scene_pos = self.mapToScene(event.pos())
+        item = self.scene().itemAt(scene_pos, self.transform())
+
+        if isinstance(item, BaseItem):
+            scene = item.scene()
+            if scene is not None:
+                scene.clearSelection()
+            item.setSelected(True)
+
+        delete_action = menu.addAction("Delete")
+        delete_action.setEnabled(isinstance(item, BaseItem))
+
+        chosen_action = menu.exec(event.globalPos())
+        if chosen_action is delete_action and isinstance(item, BaseItem):
+            scene = item.scene()
+            if scene is not None:
+                scene.removeItem(item)
 
 
 class MainWindow(QMainWindow):
@@ -25,7 +55,7 @@ class MainWindow(QMainWindow):
         self.resize(900, 600)
 
         self.scene = QGraphicsScene()
-        self.view = QGraphicsView(self.scene)
+        self.view = CanvasView(self.scene)
         self.setCentralWidget(self.view)
 
         self.factory = ObjectFactory(self.scene)

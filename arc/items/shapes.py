@@ -5,28 +5,28 @@ from PyQt6.QtCore import QRectF
 from arc.items.base_item import BaseItem
 
 
-class CircleItem(QGraphicsEllipseItem, BaseItem):
+class CircleItem(BaseItem, QGraphicsEllipseItem):
 
     def __init__(self):
-        super().__init__(QRectF(0, 0, 80, 80))
+        QGraphicsEllipseItem.__init__(self, QRectF(0, 0, 80, 80))
         self.setBrush(QBrush(QColor("#3498db")))
         self.item_type = "circle"
         self.init_object()
 
 
-class SquareItem(QGraphicsRectItem, BaseItem):
+class SquareItem(BaseItem, QGraphicsRectItem):
 
     def __init__(self):
-        super().__init__(QRectF(0, 0, 80, 80))
+        QGraphicsRectItem.__init__(self, QRectF(0, 0, 80, 80))
         self.setBrush(QBrush(QColor("#2ecc71")))
         self.item_type = "square"
         self.init_object()
 
 
-class RectangleItem(QGraphicsRectItem, BaseItem):
+class RectangleItem(BaseItem, QGraphicsRectItem):
 
     def __init__(self):
-        super().__init__(QRectF(0, 0, 120, 70))
+        QGraphicsRectItem.__init__(self, QRectF(0, 0, 120, 70))
         self.setBrush(QBrush(QColor("#e67e22")))
         self.item_type = "rectangle"
         self.init_object()

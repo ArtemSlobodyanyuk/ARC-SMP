@@ -5,10 +5,6 @@
 ## Структура
 
 - Основний застосунок (PyQt6): `arc/`
-- Сумісність зі старим пакетом: `red2/` (форвардить запуск у `arc`)
-- Прототипи/чернетки:
-  - PyQt6 (моноліт): `prototypes/beta.py`
-  - Tkinter: `prototypes/beta2.py`
 - Збереження сцен: `saves/`
 - Документація по помічнику: `docs/ARATON.md`
 
@@ -26,6 +22,7 @@
 - Додавання: Toolbar "Add items" → `Circle / Square / Rectangle`
 - Взаємодія:
   - Drag: рух об’єкта
+  - Right click: активує вікно рішеннь
   - Double click: властивості (`name`, `note`, розмір)
   - Delete: видалення зі сцени
   - Save/Load: збереження/завантаження сцени у JSON
