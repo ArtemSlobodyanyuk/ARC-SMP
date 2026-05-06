@@ -26,3 +26,5 @@
   - Double click: властивості (`name`, `note`, розмір)
   - Delete: видалення зі сцени
   - Save/Load: збереження/завантаження сцени у JSON
+
+docker build -t arc_platform:test .
