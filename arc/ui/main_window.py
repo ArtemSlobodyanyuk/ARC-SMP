@@ -4,7 +4,6 @@ from PyQt6.QtWidgets import (
     QGraphicsScene,
     QToolBar,
     QMenu,
-    QToolButton,
     QFileDialog,
     QMessageBox,
 )
@@ -15,6 +14,8 @@ from pathlib import Path
 
 from arc.core.factory import ObjectFactory
 from arc.items.base_item import BaseItem
+from arc.ui.object_browser import ObjectBrowserDock
+from arc.mods.manager import ModManager
 
 
 class CanvasView(QGraphicsView):
@@ -62,7 +63,40 @@ class MainWindow(QMainWindow):
         self.saves_dir = Path(__file__).resolve().parents[2] / "saves"
         self.saves_dir.mkdir(parents=True, exist_ok=True)
 
+        self.mod_manager = ModManager(Path(__file__).resolve().parents[2])
+
+        self.object_browser = ObjectBrowserDock(
+            create_object=self._create_object,
+            iter_items=self._iter_items,
+            on_select_item=self._select_item_in_scene,
+            shapes=self._shape_defs,
+        )
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.object_browser)
+
+        self.scene.selectionChanged.connect(self._on_scene_selection_changed)
+
         self.init_toolbar()
+
+        # Apply enabled mods (may register extra shapes, actions, etc.)
+        self.mod_manager.apply_enabled(main_window=self, factory=self.factory)
+        self.object_browser.refresh_shapes()
+
+    def load_scene_from_file(self, filename: str) -> None:
+        try:
+            payload = json.loads(Path(filename).read_text(encoding="utf-8"))
+            items = payload.get("items", [])
+        except Exception as e:
+            QMessageBox.critical(self, "Load failed", str(e))
+            return
+
+        self.scene.clear()
+        for item_data in items:
+            if isinstance(item_data, dict):
+                obj = self.factory.create_from_data(item_data)
+                if isinstance(obj, BaseItem):
+                    obj.set_on_properties_saved(self._on_item_saved)
+
+        self.object_browser.rebuild()
 
     def init_toolbar(self):
         toolbar = QToolBar()
@@ -71,18 +105,38 @@ class MainWindow(QMainWindow):
         toolbar.addAction("Save", self.save_scene)
         toolbar.addAction("Load", self.load_scene)
 
-        add_button = QToolButton()
-        add_button.setText("Add items")
-        add_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+    def _iter_items(self) -> list[BaseItem]:
+        items: list[BaseItem] = []
+        for item in self.scene.items():
+            if isinstance(item, BaseItem):
+                items.append(item)
+        return items
 
-        menu = QMenu()
+    def _shape_defs(self):
+        from arc.ui.object_browser import ShapeDef
 
-        menu.addAction("Circle", lambda: self.factory.create("circle"))
-        menu.addAction("Square", lambda: self.factory.create("square"))
-        menu.addAction("Rectangle", lambda: self.factory.create("rectangle"))
+        return [ShapeDef(k, label) for k, label in self.factory.available()]
 
-        add_button.setMenu(menu)
-        toolbar.addWidget(add_button)
+    def _create_object(self, obj_type: str, group: str) -> BaseItem | None:
+        obj = self.factory.create(obj_type)
+        if obj is None:
+            return None
+        obj.group = group or ""
+        obj.set_on_properties_saved(self._on_item_saved)
+        return obj
+
+    def _select_item_in_scene(self, obj: BaseItem) -> None:
+        self.scene.clearSelection()
+        obj.setSelected(True)
+        self.view.centerOn(obj)
+
+    def _on_scene_selection_changed(self) -> None:
+        selected = [i for i in self.scene.selectedItems() if isinstance(i, BaseItem)]
+        self.object_browser.sync_selection_from_scene(selected)
+
+    def _on_item_saved(self, obj: object) -> None:
+        if isinstance(obj, BaseItem):
+            self.object_browser.update_item_label(obj)
 
     def _serialize_scene(self) -> list[dict]:
         # QGraphicsScene.items() returns items in stacking order; order isn't important for now.
@@ -120,14 +174,4 @@ class MainWindow(QMainWindow):
         if not filename:
             return
 
-        try:
-            payload = json.loads(Path(filename).read_text(encoding="utf-8"))
-            items = payload.get("items", [])
-        except Exception as e:
-            QMessageBox.critical(self, "Load failed", str(e))
-            return
-
-        self.scene.clear()
-        for item_data in items:
-            if isinstance(item_data, dict):
-                self.factory.create_from_data(item_data)
+        self.load_scene_from_file(filename)

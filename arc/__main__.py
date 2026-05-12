@@ -1,4 +1,4 @@
-from arc.main import main
+from arc.cli import main
 
 
 if __name__ == "__main__":

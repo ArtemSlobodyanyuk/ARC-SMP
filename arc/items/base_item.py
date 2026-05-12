@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from PyQt6.QtCore import QPointF, QRectF, Qt
-from PyQt6.QtGui import QColor, QCursor, QPen
+from PyQt6.QtGui import QBrush, QColor, QCursor, QPen
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsRectItem
 
 from arc.ui.property_dialog import PropertyDialog
@@ -68,6 +68,16 @@ class _ResizeHandle(QGraphicsRectItem):
 
 class BaseItem:
 
+    def open_properties_dialog(self) -> PropertyDialog:
+        dialog = PropertyDialog(self)
+        callback = getattr(self, "_on_properties_saved", None)
+        if callable(callback):
+            dialog.saved.connect(callback)
+        return dialog
+
+    def set_on_properties_saved(self, callback) -> None:
+        self._on_properties_saved = callback
+
     def init_object(self):
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
@@ -75,13 +85,83 @@ class BaseItem:
 
         self.name = "object"
         self.note = ""
+        self.group = ""
+
+        if not hasattr(self, "_color"):
+            initial = QColor("#3498db")
+            if hasattr(self, "brush"):
+                try:
+                    initial = self.brush().color()
+                except Exception:
+                    pass
+            self.color = initial
 
         self._resize_state: _ResizeState | None = None
         self._handles: dict[HandlePos, _ResizeHandle] = {}
         self._init_resize_handles()
+        self._on_properties_saved = None
+
+    @property
+    def name(self) -> str:
+        return getattr(self, "_name", "object")
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = str(value)
+        # Qt will show this as a tooltip on hover by default.
+        try:
+            self.setToolTip(self._name)
+        except Exception:
+            pass
+
+    @property
+    def note(self) -> str:
+        return getattr(self, "_note", "")
+
+    @note.setter
+    def note(self, value: str) -> None:
+        self._note = str(value)
+
+    @property
+    def color(self) -> QColor:
+        return getattr(self, "_color", QColor("#3498db"))
+
+    @color.setter
+    def color(self, value: QColor | str) -> None:
+        qcolor = value if isinstance(value, QColor) else QColor(str(value))
+        if not qcolor.isValid():
+            return
+        self._color = qcolor
+        self.apply_color(qcolor)
+
+    @property
+    def group(self) -> str:
+        return getattr(self, "_group", "")
+
+    @group.setter
+    def group(self, value: str) -> None:
+        self._group = str(value or "")
+
+    def apply_color(self, qcolor: QColor) -> None:
+        # Fill (rect/ellipse/custom painted items)
+        if hasattr(self, "setBrush"):
+            try:
+                self.setBrush(QBrush(qcolor))
+                return
+            except Exception:
+                pass
+
+        # Stroke-only items (fallback)
+        if hasattr(self, "pen") and hasattr(self, "setPen"):
+            try:
+                pen = self.pen()
+                pen.setColor(qcolor)
+                self.setPen(pen)
+            except Exception:
+                pass
 
     def mouseDoubleClickEvent(self, event):
-        dialog = PropertyDialog(self)
+        dialog = self.open_properties_dialog()
         dialog.exec()
 
     def resize(self, w, h):
@@ -188,6 +268,8 @@ class BaseItem:
             "y": float(pos.y()),
             "w": float(rect.width()),
             "h": float(rect.height()),
-            "name": getattr(self, "name", "object"),
-            "note": getattr(self, "note", ""),
+            "name": self.name,
+            "note": self.note,
+            "color": self.color.name(QColor.NameFormat.HexRgb),
+            "group": self.group,
         }

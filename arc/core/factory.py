@@ -1,20 +1,52 @@
-from arc.items.shapes import CircleItem, SquareItem, RectangleItem
+from collections.abc import Callable
+
+from arc.items.base_item import BaseItem
+from arc.items.shapes import (
+    CircleItem,
+    DiamondItem,
+    EllipseItem,
+    HexagonItem,
+    RectangleItem,
+    RoundedRectItem,
+    SquareItem,
+    StarItem,
+    TriangleItem,
+)
 
 
 class ObjectFactory:
 
     def __init__(self, scene):
         self.scene = scene
+        self._registry: dict[str, Callable[[], BaseItem]] = {}
+        self._labels: dict[str, str] = {}
+
+        # Built-ins
+        self.register("circle", CircleItem, label="Circle")
+        self.register("ellipse", EllipseItem, label="Ellipse")
+        self.register("square", SquareItem, label="Square")
+        self.register("rectangle", RectangleItem, label="Rectangle")
+        self.register("rounded_rect", RoundedRectItem, label="Rounded Rectangle")
+        self.register("triangle", TriangleItem, label="Triangle")
+        self.register("diamond", DiamondItem, label="Diamond")
+        self.register("hexagon", HexagonItem, label="Hexagon")
+        self.register("star", StarItem, label="Star")
+
+    def register(self, key: str, ctor: Callable[[], BaseItem], *, label: str | None = None) -> None:
+        self._registry[key] = ctor
+        if label is not None:
+            self._labels[key] = label
+
+    def available(self) -> list[tuple[str, str]]:
+        # stable ordering: built-ins first then alpha for extras
+        keys = list(self._registry.keys())
+        return [(k, self._labels.get(k, k)) for k in keys]
 
     def create(self, obj_type):
-        if obj_type == "circle":
-            obj = CircleItem()
-        elif obj_type == "square":
-            obj = SquareItem()
-        elif obj_type == "rectangle":
-            obj = RectangleItem()
-        else:
-            return
+        ctor = self._registry.get(obj_type)
+        if ctor is None:
+            return None
+        obj = ctor()
 
         obj.setPos(200, 200)
         self.scene.addItem(obj)
@@ -47,5 +79,9 @@ class ObjectFactory:
         # Properties
         obj.name = str(data.get("name", obj.name))
         obj.note = str(data.get("note", obj.note))
+        obj.group = str(data.get("group", obj.group))
+        color = data.get("color")
+        if isinstance(color, str) and color:
+            obj.color = color
 
         return obj
