@@ -1,0 +1,7 @@
+{
+  "id": "sample_note",
+  "name": "Sample: Note Sticker",
+  "version": "0.1.0",
+  "entrypoint": "mod:register"
+}
+
